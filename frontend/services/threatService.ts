@@ -191,4 +191,14 @@ export const threatService = {
 
     return { success: true, message: 'Threat deleted successfully', data: null };
   },
+
+  async getThreatStats(): Promise<{ total: number; critical: number; high: number; active: number }> {
+    const list = getStoredThreats();
+    return {
+      total: list.length,
+      critical: list.filter((t) => t.severity?.toLowerCase() === 'critical').length,
+      high: list.filter((t) => t.severity?.toLowerCase() === 'high').length,
+      active: list.filter((t) => t.status?.toLowerCase() === 'new' || t.status?.toLowerCase() === 'investigating' || t.status?.toLowerCase() === 'active').length,
+    };
+  },
 };
