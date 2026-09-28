@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  # MongoDB Database Service
+  mongodb:
+    image: mongo:7.0
+    container_name: threatlink_mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: threatlink_ai
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - threatlink_network
+
+  # FastAPI Backend Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: threatlink_backend
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_NAME=ThreatLink AI
+      - APP_ENV=production
+      - API_PREFIX=/api/v1
+      - MONGODB_URL=mongodb://mongodb:27017
+      - DATABASE_NAME=threatlink_ai
+      - BLOCKCHAIN_RPC_URL=http://127.0.0.1:8545
+      - BLOCKCHAIN_CHAIN_ID=31337
+      - BLOCKCHAIN_CONTRACT_ADDRESS=0xF2E246BB76DF876Cef8b38ae84130F4F55De395b
+      - BLOCKCHAIN_PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+      - JWT_SECRET_KEY=threatlink_super_secret_jwt_key_2026_investigator
+      - JWT_ALGORITHM=HS256
+      - JWT_ACCESS_TOKEN_EXPIRE_MINUTES=60
+    depends_on:
+      - mongodb
+    networks:
+      - threatlink_network
+
+  # Next.js Frontend Service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: threatlink_frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+    depends_on:
+      - backend
+    networks:
+      - threatlink_network
+
+volumes:
+  mongodb_data:
+
+networks:
+  threatlink_network:
+    driver: bridge
