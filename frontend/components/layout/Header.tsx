@@ -56,10 +56,10 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
           )}
         </Link>
 
-        {/* System Status */}
+        {/* System Status & Supabase Auth Badge */}
         <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-950/60 border border-zinc-800/40 text-zinc-400 text-xs font-mono font-medium">
-          <Activity className="w-3.5 h-3.5 animate-pulse" />
-          <span>SOC Active</span>
+          <Activity className="w-3.5 h-3.5 animate-pulse text-zinc-400" />
+          <span>SOC Active // Supabase Auth</span>
         </div>
 
         {/* User profile & Logout */}
