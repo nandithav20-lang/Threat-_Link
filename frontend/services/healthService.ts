@@ -5,7 +5,7 @@ export const healthService = {
   async getBackendHealth(): Promise<ApiResponse<HealthData>> {
     try {
       return await fetchApi<ApiResponse<HealthData>>('/health');
-    } catch (err) {
+    } catch {
       return {
         success: true,
         message: 'Backend Service Status Active (Deployment Mode)',
@@ -19,7 +19,7 @@ export const healthService = {
   async getDatabaseHealth(): Promise<ApiResponse<DatabaseHealthData>> {
     try {
       return await fetchApi<ApiResponse<DatabaseHealthData>>('/health/database');
-    } catch (err) {
+    } catch {
       return {
         success: true,
         message: 'Database Connected (Deployment Mode)',

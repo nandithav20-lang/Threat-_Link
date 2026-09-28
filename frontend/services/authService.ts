@@ -31,7 +31,7 @@ export const authService = {
         method: 'POST',
         body: JSON.stringify({ name, email, password }),
       });
-    } catch (err) {
+    } catch {
       // Fallback for Vercel deployment when backend is not publicly hosted
       const demoUser: User = {
         id: `usr-${Date.now()}`,
@@ -59,7 +59,7 @@ export const authService = {
       });
       if (res && res.success) return res;
       throw new Error(res?.message || 'Login failed');
-    } catch (err) {
+    } catch {
       // Fallback for Vercel deployment when backend is not publicly hosted
       const demoUser: User = {
         id: `usr-${Date.now()}`,
@@ -89,7 +89,7 @@ export const authService = {
         method: 'GET',
         headers,
       });
-    } catch (err) {
+    } catch {
       const storedUser = typeof window !== 'undefined' ? localStorage.getItem('threatlink_user') : null;
       let userObj: User | undefined;
       if (storedUser) {

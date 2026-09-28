@@ -57,7 +57,7 @@ export const threatService = {
         return res;
       }
       return { success: true, message: 'Threats retrieved', data: fallbackThreats };
-    } catch (err) {
+    } catch {
       return { success: true, message: 'Threats retrieved (Deployment Mode)', data: fallbackThreats };
     }
   },
@@ -65,7 +65,7 @@ export const threatService = {
   async getThreat(id: string): Promise<ApiResponse<Threat>> {
     try {
       return await fetchApi<ApiResponse<Threat>>(`/threats/${id}`);
-    } catch (err) {
+    } catch {
       const found = fallbackThreats.find((t) => t.id === id) || fallbackThreats[0];
       return { success: true, message: 'Threat retrieved', data: found };
     }
@@ -77,7 +77,7 @@ export const threatService = {
         method: 'POST',
         body: JSON.stringify(data),
       });
-    } catch (err) {
+    } catch {
       const newThreat: Threat = {
         id: `THREAT-${Math.floor(100 + Math.random() * 900)}`,
         indicator: data.indicator,
@@ -99,7 +99,7 @@ export const threatService = {
         method: 'PUT',
         body: JSON.stringify(data),
       });
-    } catch (err) {
+    } catch {
       const found = fallbackThreats.find((t) => t.id === id) || fallbackThreats[0];
       const updated = { ...found, ...data };
       return { success: true, message: 'Threat updated successfully', data: updated };
@@ -111,7 +111,7 @@ export const threatService = {
       return await fetchApi<ApiResponse<null>>(`/threats/${id}`, {
         method: 'DELETE',
       });
-    } catch (err) {
+    } catch {
       return { success: true, message: 'Threat deleted successfully', data: null };
     }
   },

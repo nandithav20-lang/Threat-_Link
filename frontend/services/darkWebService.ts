@@ -37,7 +37,7 @@ export const darkWebService = {
       const res = await fetchApi<ApiResponse<DarkWebIndicator[]>>('/dark-web');
       if (res && res.success && res.data && res.data.length > 0) return res;
       return { success: true, message: 'Indicators retrieved', data: fallbackDarkWeb };
-    } catch (err) {
+    } catch {
       return { success: true, message: 'Indicators retrieved (Deployment Mode)', data: fallbackDarkWeb };
     }
   },
@@ -45,7 +45,7 @@ export const darkWebService = {
   async getDarkWebIndicator(id: string): Promise<ApiResponse<DarkWebIndicator>> {
     try {
       return await fetchApi<ApiResponse<DarkWebIndicator>>(`/dark-web/${id}`);
-    } catch (err) {
+    } catch {
       const found = fallbackDarkWeb.find((d) => d.id === id) || fallbackDarkWeb[0];
       return { success: true, message: 'Indicator retrieved', data: found };
     }
@@ -57,7 +57,7 @@ export const darkWebService = {
         method: 'POST',
         body: JSON.stringify(data),
       });
-    } catch (err) {
+    } catch {
       const newItem: DarkWebIndicator = {
         id: `DW-${Math.floor(100 + Math.random() * 900)}`,
         indicator: data.indicator,
@@ -81,7 +81,7 @@ export const darkWebService = {
         method: 'PUT',
         body: JSON.stringify(data),
       });
-    } catch (err) {
+    } catch {
       const found = fallbackDarkWeb.find((d) => d.id === id) || fallbackDarkWeb[0];
       const updated = { ...found, ...data };
       return { success: true, message: 'Indicator updated', data: updated };
@@ -93,7 +93,7 @@ export const darkWebService = {
       return await fetchApi<ApiResponse<null>>(`/dark-web/${id}`, {
         method: 'DELETE',
       });
-    } catch (err) {
+    } catch {
       return { success: true, message: 'Indicator deleted', data: null };
     }
   },

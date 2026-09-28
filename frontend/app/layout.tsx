@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
 import { AppLayout } from '@/components/layout/AppLayout';
+import { OrbitalHeroSection } from '@/components/ui/orbital-hero-section';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -26,10 +27,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-950 text-slate-100 min-h-screen`}>
-        <AuthProvider>
-          <AppLayout>{children}</AppLayout>
-        </AuthProvider>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased text-slate-100 min-h-screen bg-transparent`}>
+        <OrbitalHeroSection
+          className="fixed inset-0"
+          focus={[0.5, 0.5]}
+          viewRadius={3.5}
+          glow={0.5}
+          scrim="none"
+        >
+          <div className="relative z-10 min-h-screen overflow-y-auto">
+            <AuthProvider>
+              <AppLayout>{children}</AppLayout>
+            </AuthProvider>
+          </div>
+        </OrbitalHeroSection>
       </body>
     </html>
   );

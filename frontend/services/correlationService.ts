@@ -43,7 +43,7 @@ export const correlationService = {
       return await fetchApi<ApiResponse<CorrelationRunData>>('/correlation/run', {
         method: 'POST',
       });
-    } catch (err) {
+    } catch {
       return {
         success: true,
         message: 'Threat correlation engine executed',
@@ -59,7 +59,7 @@ export const correlationService = {
       const res = await fetchApi<ApiResponse<Relationship[]>>('/correlation/relationships');
       if (res && res.success && res.data && res.data.length > 0) return res;
       return { success: true, message: 'Relationships retrieved', data: fallbackRelationships };
-    } catch (err) {
+    } catch {
       return { success: true, message: 'Relationships retrieved (Deployment Mode)', data: fallbackRelationships };
     }
   },
@@ -67,7 +67,7 @@ export const correlationService = {
   async getEntityRelationships(entityId: string): Promise<ApiResponse<Relationship[]>> {
     try {
       return await fetchApi<ApiResponse<Relationship[]>>(`/correlation/entity/${entityId}`);
-    } catch (err) {
+    } catch {
       const filtered = fallbackRelationships.filter(
         (r) => r.matched_field === entityId || r.source_id === entityId || r.target_id === entityId
       );

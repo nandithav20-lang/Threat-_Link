@@ -123,7 +123,7 @@ function GraphCanvas({
     });
 
     // Valid edges for visible nodes
-    let currentEdges = edges.filter(
+    const currentEdges = edges.filter(
       (edge) => validNodeIds.has(edge.source) && validNodeIds.has(edge.target)
     );
 

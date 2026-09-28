@@ -32,7 +32,8 @@ export async function fetchApi<T>(endpoint: string, options?: RequestInit): Prom
 
     const data = await response.json();
     return data as T;
-  } catch (error: any) {
-    throw new Error(error.message || 'Network error: Unable to connect to backend server.');
+  } catch (error: unknown) {
+    const err = error as Error;
+    throw new Error(err.message || 'Network error: Unable to connect to backend server.');
   }
 }

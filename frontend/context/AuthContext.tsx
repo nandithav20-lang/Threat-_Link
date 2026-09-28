@@ -44,8 +44,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           if (meRes.success && meRes.data && meRes.data.user) {
             setUser(meRes.data.user);
             localStorage.setItem('threatlink_user', JSON.stringify(meRes.data.user));
-          } else if (meRes.data && (meRes.data as any).id) {
-            const uData: User = meRes.data as any;
+          } else if (meRes.data && (meRes.data as Record<string, unknown>).id) {
+            const uData: User = meRes.data as unknown as User;
             setUser(uData);
             localStorage.setItem('threatlink_user', JSON.stringify(uData));
           } else {
@@ -97,7 +97,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       const meRes = await authService.getCurrentUser(token);
       if (meRes.success && meRes.data) {
-        const userData = meRes.data.user || (meRes.data as any);
+        const userData = meRes.data.user || (meRes.data as unknown as User);
         if (userData && userData.id) {
           setUser(userData);
           localStorage.setItem('threatlink_user', JSON.stringify(userData));

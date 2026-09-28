@@ -39,13 +39,26 @@ const navItems = [
   { name: 'System Status', href: '/system', icon: Activity },
 ];
 
-export const Sidebar: React.FC = () => {
+export const Sidebar: React.FC<{ isOpen?: boolean; setIsOpen?: (v: boolean) => void }> = ({ isOpen = true, setIsOpen }) => {
   const pathname = usePathname();
   const { user, logout } = useAuth();
 
   return (
-    <aside className="w-64 bg-slate-950 border-r border-slate-800/80 flex flex-col flex-shrink-0 h-screen sticky top-0">
-      {/* Brand Logo */}
+    <>
+      {/* Mobile/Overlay background */}
+      {isOpen && setIsOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 z-40 backdrop-blur-sm"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+      <aside className={`
+        fixed inset-y-0 left-0 z-50
+        w-64 bg-slate-950 border-r border-slate-800/80 flex flex-col flex-shrink-0 h-screen
+        transform transition-transform duration-300 ease-in-out
+        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        {/* Brand Logo */}
       <Link href="/" className="h-16 flex items-center gap-3 px-6 border-b border-slate-800/80 hover:bg-slate-900/50 transition-colors group">
         <div className="p-2 bg-zinc-950 border border-zinc-700/50 rounded-lg text-zinc-400 group-hover:scale-105 transition-transform">
           <Shield className="w-6 h-6" />
@@ -112,5 +125,6 @@ export const Sidebar: React.FC = () => {
         )}
       </div>
     </aside>
+    </>
   );
 };

@@ -47,7 +47,7 @@ export const fraudEventService = {
       const res = await fetchApi<ApiResponse<FraudEvent[]>>('/fraud-events');
       if (res && res.success && res.data && res.data.length > 0) return res;
       return { success: true, message: 'Fraud events retrieved', data: fallbackFraud };
-    } catch (err) {
+    } catch {
       return { success: true, message: 'Fraud events retrieved (Deployment Mode)', data: fallbackFraud };
     }
   },
@@ -55,7 +55,7 @@ export const fraudEventService = {
   async getFraudEvent(id: string): Promise<ApiResponse<FraudEvent>> {
     try {
       return await fetchApi<ApiResponse<FraudEvent>>(`/fraud-events/${id}`);
-    } catch (err) {
+    } catch {
       const found = fallbackFraud.find((f) => f.id === id) || fallbackFraud[0];
       return { success: true, message: 'Event retrieved', data: found };
     }
@@ -67,7 +67,7 @@ export const fraudEventService = {
         method: 'POST',
         body: JSON.stringify(data),
       });
-    } catch (err) {
+    } catch {
       const newItem: FraudEvent = {
         id: `FRD-${Math.floor(100 + Math.random() * 900)}`,
         entity_id: data.entity_id,
@@ -96,7 +96,7 @@ export const fraudEventService = {
         method: 'PUT',
         body: JSON.stringify(data),
       });
-    } catch (err) {
+    } catch {
       const found = fallbackFraud.find((f) => f.id === id) || fallbackFraud[0];
       const updated = { ...found, ...data };
       return { success: true, message: 'Event updated', data: updated };
@@ -108,7 +108,7 @@ export const fraudEventService = {
       return await fetchApi<ApiResponse<null>>(`/fraud-events/${id}`, {
         method: 'DELETE',
       });
-    } catch (err) {
+    } catch {
       return { success: true, message: 'Event deleted', data: null };
     }
   },

@@ -26,7 +26,7 @@ export const riskService = {
         method: 'POST',
         body: JSON.stringify({ incident_id: incidentId }),
       });
-    } catch (err) {
+    } catch {
       return { success: true, message: 'Risk score calculated', data: { ...fallbackRisk, incident_id: incidentId } };
     }
   },
@@ -36,7 +36,7 @@ export const riskService = {
       const res = await fetchApi<ApiResponse<RiskAnalysisData>>(`/risk/${incidentId}`);
       if (res && res.success && res.data) return res;
       return { success: true, message: 'Risk analysis retrieved', data: { ...fallbackRisk, incident_id: incidentId } };
-    } catch (err) {
+    } catch {
       return { success: true, message: 'Risk analysis retrieved (Deployment Mode)', data: { ...fallbackRisk, incident_id: incidentId } };
     }
   },

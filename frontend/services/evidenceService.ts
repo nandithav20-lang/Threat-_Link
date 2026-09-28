@@ -49,7 +49,7 @@ export const evidenceService = {
         method: 'POST',
         body: JSON.stringify(data),
       });
-    } catch (err) {
+    } catch {
       const newItem: EvidenceItem = {
         id: `EVD-${Math.floor(100 + Math.random() * 900)}`,
         incident_id: data.incident_id,
@@ -71,7 +71,7 @@ export const evidenceService = {
       return await fetchApi<ApiResponse<EvidenceItem[]>>(`/evidence/generate-from-investigation/${incidentId}`, {
         method: 'POST',
       });
-    } catch (err) {
+    } catch {
       return { success: true, message: 'Evidence generated from investigation', data: fallbackEvidence };
     }
   },
@@ -79,7 +79,7 @@ export const evidenceService = {
   async getEvidence(evidenceId: string): Promise<ApiResponse<EvidenceItem>> {
     try {
       return await fetchApi<ApiResponse<EvidenceItem>>(`/evidence/${evidenceId}`);
-    } catch (err) {
+    } catch {
       const found = fallbackEvidence.find((e) => e.id === evidenceId) || fallbackEvidence[0];
       return { success: true, message: 'Evidence retrieved', data: found };
     }
@@ -88,7 +88,7 @@ export const evidenceService = {
   async getIncidentEvidence(incidentId: string): Promise<ApiResponse<EvidenceItem[]>> {
     try {
       return await fetchApi<ApiResponse<EvidenceItem[]>>(`/incidents/${incidentId}/evidence`);
-    } catch (err) {
+    } catch {
       return { success: true, message: 'Incident evidence retrieved', data: fallbackEvidence };
     }
   },
@@ -98,7 +98,7 @@ export const evidenceService = {
       const res = await fetchApi<ApiResponse<EvidenceItem[]>>('/evidence');
       if (res && res.success && res.data && res.data.length > 0) return res;
       return { success: true, message: 'Evidence retrieved', data: fallbackEvidence };
-    } catch (err) {
+    } catch {
       return { success: true, message: 'Evidence retrieved (Deployment Mode)', data: fallbackEvidence };
     }
   },
@@ -108,7 +108,7 @@ export const evidenceService = {
       return await fetchApi<ApiResponse<EvidenceVerificationData>>(`/evidence/${evidenceId}/verify`, {
         method: 'POST',
       });
-    } catch (err) {
+    } catch {
       const found = fallbackEvidence.find((e) => e.id === evidenceId) || fallbackEvidence[0];
       return {
         success: true,
@@ -127,7 +127,7 @@ export const evidenceService = {
   async getBlockchainStatus(): Promise<ApiResponse<BlockchainStatusData>> {
     try {
       return await fetchApi<ApiResponse<BlockchainStatusData>>('/blockchain/status');
-    } catch (err) {
+    } catch {
       return {
         success: true,
         message: 'Blockchain status active',
@@ -147,7 +147,7 @@ export const evidenceService = {
       return await fetchApi<ApiResponse<BlockchainAnchorData>>(`/evidence/${evidenceId}/anchor`, {
         method: 'POST',
       });
-    } catch (err) {
+    } catch {
       const found = fallbackEvidence.find((e) => e.id === evidenceId) || fallbackEvidence[0];
       return {
         success: true,
@@ -167,7 +167,7 @@ export const evidenceService = {
       return await fetchApi<ApiResponse<BlockchainVerificationData>>(`/evidence/${evidenceId}/verify-blockchain`, {
         method: 'POST',
       });
-    } catch (err) {
+    } catch {
       const found = fallbackEvidence.find((e) => e.id === evidenceId) || fallbackEvidence[0];
       return {
         success: true,

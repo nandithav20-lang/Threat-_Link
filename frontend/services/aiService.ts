@@ -54,7 +54,7 @@ export const aiService = {
       return await fetchApi<ApiResponse<AIAnalysisData>>('/ai/analyze', {
         method: 'POST',
       });
-    } catch (err) {
+    } catch {
       return { success: true, message: 'AI Multi-Agent Analysis Completed', data: fallbackAI };
     }
   },

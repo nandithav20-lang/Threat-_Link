@@ -94,7 +94,7 @@ export const incidentService = {
       const res = await fetchApi<ApiResponse<IncidentItem[]>>('/incidents');
       if (res && res.success && res.data && res.data.length > 0) return res;
       return { success: true, message: 'Incidents retrieved', data: fallbackIncidents };
-    } catch (err) {
+    } catch {
       return { success: true, message: 'Incidents retrieved (Deployment Mode)', data: fallbackIncidents };
     }
   },
@@ -102,7 +102,7 @@ export const incidentService = {
   async getIncident(id: string): Promise<ApiResponse<IncidentItem>> {
     try {
       return await fetchApi<ApiResponse<IncidentItem>>(`/incidents/${id}`);
-    } catch (err) {
+    } catch {
       const found = fallbackIncidents.find((i) => i.id === id) || fallbackIncidents[0];
       return { success: true, message: 'Incident retrieved', data: found };
     }
@@ -114,7 +114,7 @@ export const incidentService = {
         method: 'POST',
         body: JSON.stringify(data),
       });
-    } catch (err) {
+    } catch {
       const newItem: IncidentItem = {
         id: `INC-${Math.floor(100 + Math.random() * 900)}`,
         title: data.title,
@@ -135,7 +135,7 @@ export const incidentService = {
         method: 'PATCH',
         body: JSON.stringify({ status }),
       });
-    } catch (err) {
+    } catch {
       const found = fallbackIncidents.find((i) => i.id === id) || fallbackIncidents[0];
       const updated = { ...found, status };
       return { success: true, message: 'Incident status updated', data: updated };
@@ -145,7 +145,7 @@ export const incidentService = {
   async getIncidentTimeline(id: string): Promise<ApiResponse<TimelineEvent[]>> {
     try {
       return await fetchApi<ApiResponse<TimelineEvent[]>>(`/incidents/${id}/timeline`);
-    } catch (err) {
+    } catch {
       return { success: true, message: 'Timeline retrieved', data: fallbackTimeline };
     }
   },
@@ -155,7 +155,7 @@ export const incidentService = {
       return await fetchApi<ApiResponse<InvestigationData>>(`/investigations/run/${id}`, {
         method: 'POST',
       });
-    } catch (err) {
+    } catch {
       return { success: true, message: 'AI Investigation completed', data: { ...fallbackInvestigation, incident_id: id } };
     }
   },
@@ -163,7 +163,7 @@ export const incidentService = {
   async getInvestigation(id: string): Promise<ApiResponse<InvestigationData>> {
     try {
       return await fetchApi<ApiResponse<InvestigationData>>(`/investigations/${id}`);
-    } catch (err) {
+    } catch {
       return { success: true, message: 'Investigation retrieved', data: { ...fallbackInvestigation, incident_id: id } };
     }
   },
