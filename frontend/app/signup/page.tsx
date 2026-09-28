@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Shield, User as UserIcon, Lock, Mail, ArrowRight, AlertCircle, Loader2, CheckCircle, Eye, EyeOff } from 'lucide-react';
+import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
 
 export default function SignupPage() {
   const [name, setName] = useState('');
@@ -133,6 +134,20 @@ export default function SignupPage() {
             <span>{successMsg}</span>
           </div>
         )}
+
+        {/* Google Auth Button */}
+        <div className="mb-6">
+          <GoogleSignInButton label="Sign up with Google" />
+        </div>
+
+        <div className="relative mb-6 flex items-center justify-center">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-slate-800" />
+          </div>
+          <span className="relative bg-slate-900 px-3 text-[11px] font-mono text-slate-500 uppercase">
+            Or continue with email
+          </span>
+        </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} autoComplete="off" className="space-y-4">

@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { authService, User, AuthResponse } from '@/services/authService';
+import { createClient } from '@/utils/supabase/client';
 
 interface AuthContextType {
   user: User | null;
@@ -11,7 +12,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<AuthResponse>;
   register: (name: string, email: string, password: string) => Promise<AuthResponse>;
-  logout: () => void;
+  logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
 
@@ -24,58 +25,68 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const router = useRouter();
 
   useEffect(() => {
-    const initAuth = async () => {
+    const supabase = createClient();
+
+    // Fetch initial session
+    const getInitialSession = async () => {
       try {
-        const storedToken = localStorage.getItem('threatlink_token');
-        const storedUser = localStorage.getItem('threatlink_user');
-
-        if (storedToken) {
-          setToken(storedToken);
-          if (storedUser) {
-            try {
-              setUser(JSON.parse(storedUser));
-            } catch {
-              // ignore json parse error
-            }
-          }
-
-          // Verify token with backend
-          const meRes = await authService.getCurrentUser(storedToken);
-          if (meRes.success && meRes.data && meRes.data.user) {
-            setUser(meRes.data.user);
-            localStorage.setItem('threatlink_user', JSON.stringify(meRes.data.user));
-          } else if (meRes.data && (meRes.data as Record<string, unknown>).id) {
-            const uData: User = meRes.data as unknown as User;
-            setUser(uData);
-            localStorage.setItem('threatlink_user', JSON.stringify(uData));
-          } else {
-            // Invalid token
-            localStorage.removeItem('threatlink_token');
-            localStorage.removeItem('threatlink_user');
-            setToken(null);
-            setUser(null);
-          }
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session && session.user) {
+          const u = session.user;
+          const formattedUser: User = {
+            id: u.id,
+            name: u.user_metadata?.full_name || u.email?.split('@')[0] || 'Investigator',
+            email: u.email || '',
+            role: u.user_metadata?.role || 'INVESTIGATOR',
+            created_at: u.created_at,
+          };
+          setUser(formattedUser);
+          setToken(session.access_token);
+        } else {
+          setUser(null);
+          setToken(null);
         }
       } catch (err) {
-        console.error('Auth initialization error:', err);
+        console.error('Failed to get Supabase session:', err);
       } finally {
         setLoading(false);
       }
     };
 
-    initAuth();
+    getInitialSession();
+
+    // Listen to Auth Changes (Google Login, Sign Out, Session Token Refresh)
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (session && session.user) {
+          const u = session.user;
+          const formattedUser: User = {
+            id: u.id,
+            name: u.user_metadata?.full_name || u.email?.split('@')[0] || 'Investigator',
+            email: u.email || '',
+            role: u.user_metadata?.role || 'INVESTIGATOR',
+            created_at: u.created_at,
+          };
+          setUser(formattedUser);
+          setToken(session.access_token);
+        } else {
+          setUser(null);
+          setToken(null);
+        }
+        setLoading(false);
+      }
+    );
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, []);
 
   const login = async (email: string, password: string): Promise<AuthResponse> => {
     const res = await authService.login(email, password);
     if (res.success && res.data && res.data.access_token && res.data.user) {
-      const newToken = res.data.access_token;
-      const newUser = res.data.user;
-
-      setToken(newToken);
-      setUser(newUser);
-      localStorage.setItem('threatlink_token', newToken);
-      localStorage.setItem('threatlink_user', JSON.stringify(newUser));
+      setToken(res.data.access_token);
+      setUser(res.data.user);
     }
     return res;
   };
@@ -84,27 +95,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return authService.register(name, email, password);
   };
 
-  const logout = () => {
-    localStorage.removeItem('threatlink_token');
-    localStorage.removeItem('threatlink_user');
-    setToken(null);
+  const logout = async () => {
+    await authService.logout();
     setUser(null);
-    router.push('/');
+    setToken(null);
+    router.push('/login');
   };
 
   const refreshUser = async () => {
-    if (!token) return;
-    try {
-      const meRes = await authService.getCurrentUser(token);
-      if (meRes.success && meRes.data) {
-        const userData = meRes.data.user || (meRes.data as unknown as User);
-        if (userData && userData.id) {
-          setUser(userData);
-          localStorage.setItem('threatlink_user', JSON.stringify(userData));
-        }
-      }
-    } catch (err) {
-      console.error('Failed to refresh user:', err);
+    const res = await authService.getCurrentUser();
+    if (res.success && res.data?.user) {
+      setUser(res.data.user);
     }
   };
 

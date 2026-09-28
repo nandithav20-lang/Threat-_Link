@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Shield, Lock, Mail, ArrowRight, AlertCircle, Loader2, Eye, EyeOff } from 'lucide-react';
+import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
 
 function LoginForm() {
   const [email, setEmail] = useState('');
@@ -81,6 +82,20 @@ function LoginForm() {
           <span>{error}</span>
         </div>
       )}
+
+      {/* Google Auth Button */}
+      <div className="mb-6">
+        <GoogleSignInButton label="Sign in with Google" />
+      </div>
+
+      <div className="relative mb-6 flex items-center justify-center">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-slate-800" />
+        </div>
+        <span className="relative bg-slate-900 px-3 text-[11px] font-mono text-slate-500 uppercase">
+          Or continue with email
+        </span>
+      </div>
 
       {/* Form */}
       <form onSubmit={handleSubmit} autoComplete="off" className="space-y-5">
