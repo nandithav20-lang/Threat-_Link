@@ -1,7 +1,8 @@
 {
-  "network": "local-evm",
-  "chainId": 31337,
+  "network": "mst-testnet",
+  "chainId": 1337,
   "contractName": "EvidenceRegistry",
   "address": "0xF2E246BB76DF876Cef8b38ae84130F4F55De395b",
-  "deployedAt": "2026-09-28T20:55:15.800441+00:00"
+  "rpcUrl": "https://rpc.mstblockchain.com",
+  "deployedAt": "2026-09-29T14:05:00.000000+00:00"
 }
