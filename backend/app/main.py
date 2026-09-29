@@ -69,6 +69,10 @@ app.include_router(evidence.router, prefix=settings.API_PREFIX, dependencies=pro
 
 
 
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
+
 @app.get("/", response_model=ApiResponse[None])
 def root():
     return ApiResponse(

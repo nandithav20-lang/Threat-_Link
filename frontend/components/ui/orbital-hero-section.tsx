@@ -134,6 +134,8 @@ export interface OrbitalHeroSectionProps
   showOrbits?: boolean;
   /** Draw the Sun's own straight track through space. */
   showSunTrack?: boolean;
+  /** Add helical background orbit lines. Off by default. */
+  showWakes?: boolean;
   /** Let the pointer nudge the camera. */
   interactive?: boolean;
   /** Freeze on the current frame. */
@@ -249,7 +251,8 @@ export function OrbitalHeroSection({
   starCount = 1500,
   glow = 1,
   showOrbits = false,
-  showSunTrack = true,
+  showSunTrack = false,
+  showWakes = false,
   interactive = true,
   paused = false,
   sunColor = "#FFF2CC",
@@ -262,13 +265,13 @@ export function OrbitalHeroSection({
 
   const props = useRef({
     planets, yearSeconds, trailYears, compress, maxTurns, planeSpread, eccentricity, alignToCourse, driftSpeed, apex,
-    viewRadius, tilt, spin, roll, lead, focus, scrim, scrimStrength, starCount, glow, showOrbits, showSunTrack,
+    viewRadius, tilt, spin, roll, lead, focus, scrim, scrimStrength, starCount, glow, showOrbits, showSunTrack, showWakes,
     interactive, paused, sunColor,
   });
   useEffect(() => {
     props.current = {
       planets, yearSeconds, trailYears, compress, maxTurns, planeSpread, eccentricity, alignToCourse, driftSpeed, apex,
-      viewRadius, tilt, spin, roll, lead, focus, scrim, scrimStrength, starCount, glow, showOrbits, showSunTrack,
+      viewRadius, tilt, spin, roll, lead, focus, scrim, scrimStrength, starCount, glow, showOrbits, showSunTrack, showWakes,
       interactive, paused, sunColor,
     };
   });
@@ -822,43 +825,39 @@ export function OrbitalHeroSection({
           }
         }
 
-        const stroke = (from: number, to: number, alpha: number, wide: number) => {
-          ctx!.strokeStyle = `rgba(${r},${g},${b},${alpha.toFixed(3)})`;
-          ctx!.lineWidth = wide;
-          ctx!.beginPath();
-          let started = false;
-          for (let q = from; q <= to; q++) {
-            if (!okArr[q]) { started = false; continue; }
-            if (!started) { ctx!.moveTo(xs[q], ys[q]); started = true; }
-            else ctx!.lineTo(xs[q], ys[q]);
+        if (C.showWakes) {
+          const stroke = (from: number, to: number, alpha: number, wide: number) => {
+            ctx!.strokeStyle = `rgba(${r},${g},${b},${alpha.toFixed(3)})`;
+            ctx!.lineWidth = wide;
+            ctx!.beginPath();
+            let started = false;
+            for (let q = from; q <= to; q++) {
+              if (!okArr[q]) { started = false; continue; }
+              if (!started) { ctx!.moveTo(xs[q], ys[q]); started = true; }
+              else ctx!.lineTo(xs[q], ys[q]);
+            }
+            ctx!.stroke();
+          };
+
+          // The soft halo first, as two unbroken paths near the head.
+          ctx!.lineCap = "round";
+          ctx!.lineJoin = "round";
+          stroke(Math.floor(N * 0.72), N, 0.05 * bright, 6.5);
+          stroke(Math.floor(N * 0.86), N, 0.05 * bright, 3);
+
+          ctx!.lineCap = "butt";
+          ctx!.lineWidth = 1.3;
+          for (let q = 0; q < N; q++) {
+            if (!okArr[q] || !okArr[q + 1]) continue;
+            const f = (q + 1) / N; // 0 at the tail, 1 at the planet
+            const a = Math.pow(f, 2.6) * 0.95 * bright;
+            if (a < 0.005) continue; // the tail is already invisible here
+            ctx!.strokeStyle = `rgba(${r},${g},${b},${a.toFixed(3)})`;
+            ctx!.beginPath();
+            ctx!.moveTo(xs[q], ys[q]);
+            ctx!.lineTo(xs[q + 1], ys[q + 1]);
+            ctx!.stroke();
           }
-          ctx!.stroke();
-        };
-
-        // The soft halo first, as two unbroken paths near the head.
-        ctx!.lineCap = "round";
-        ctx!.lineJoin = "round";
-        stroke(Math.floor(N * 0.72), N, 0.05 * bright, 6.5);
-        stroke(Math.floor(N * 0.86), N, 0.05 * bright, 3);
-
-        // Then the line itself, one segment at a time, each with its own
-        // alpha. That gives as many steps in the fade as there are samples —
-        // hundreds — instead of the handful you get from stroking the whole
-        // path a few times over, where the steps land unevenly and read as
-        // breaks. Butt ends are what keeps it seamless: two round ends meeting
-        // at a joint would overlap and light up as a bead.
-        ctx!.lineCap = "butt";
-        ctx!.lineWidth = 1.3;
-        for (let q = 0; q < N; q++) {
-          if (!okArr[q] || !okArr[q + 1]) continue;
-          const f = (q + 1) / N; // 0 at the tail, 1 at the planet
-          const a = Math.pow(f, 2.6) * 0.95 * bright;
-          if (a < 0.005) continue; // the tail is already invisible here
-          ctx!.strokeStyle = `rgba(${r},${g},${b},${a.toFixed(3)})`;
-          ctx!.beginPath();
-          ctx!.moveTo(xs[q], ys[q]);
-          ctx!.lineTo(xs[q + 1], ys[q + 1]);
-          ctx!.stroke();
         }
       }
 

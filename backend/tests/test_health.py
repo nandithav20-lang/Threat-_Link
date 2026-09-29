@@ -9,6 +9,13 @@ def test_root_endpoint():
         assert data["success"] is True
         assert data["message"] == "Welcome to ThreatLink AI API"
 
+def test_direct_health_endpoint():
+    with TestClient(app) as client:
+        response = client.get("/health")
+        assert response.status_code == 200
+        data = response.json()
+        assert data == {"status": "ok"}
+
 def test_health_endpoint():
     with TestClient(app) as client:
         response = client.get("/api/v1/health")
