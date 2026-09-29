@@ -100,7 +100,7 @@ export default function SystemPage() {
       </div>
 
       {/* Infrastructure Diagnostics Overview */}
-      <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5 text-xs text-slate-300 space-y-3">
+      <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5 text-xs text-slate-300 space-y-4">
         <h4 className="font-bold text-white text-sm flex items-center gap-2">
           <span>Infrastructure Connectivity Topology</span>
         </h4>
@@ -122,6 +122,37 @@ export default function SystemPage() {
             <span className="text-slate-400 block font-semibold">WebSocket Event Stream</span>
             <div className="text-slate-200 font-bold">ws://127.0.0.1:8000/ws</div>
             <div className="text-zinc-400 text-[10px]">Channel: Broadcast • Live Alerts Stream</div>
+          </div>
+        </div>
+
+        {/* Visual .env Loaded Blockchain Credentials */}
+        <div className="p-4 bg-slate-950/90 rounded-lg border border-zinc-500/40 space-y-2 font-mono">
+          <div className="flex items-center justify-between">
+            <span className="font-bold text-white uppercase tracking-wider text-xs">
+              Active .env Environment Variables (Loaded in Backend)
+            </span>
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-zinc-950 text-zinc-300 border border-zinc-800">
+              CONFIGURED IN backend/.env
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-[11px] pt-1">
+            <div className="p-2 bg-slate-900 rounded border border-slate-800">
+              <span className="text-slate-400 block text-[10px]">BLOCKCHAIN_RPC_URL</span>
+              <span className="text-zinc-300 font-bold truncate block">https://rpc.mstblockchain.com</span>
+            </div>
+            <div className="p-2 bg-slate-900 rounded border border-slate-800">
+              <span className="text-slate-400 block text-[10px]">BLOCKCHAIN_CHAIN_ID</span>
+              <span className="text-zinc-300 font-bold block">1337 (MST Chain)</span>
+            </div>
+            <div className="p-2 bg-slate-900 rounded border border-slate-800">
+              <span className="text-slate-400 block text-[10px]">BLOCKCHAIN_CONTRACT_ADDRESS</span>
+              <span className="text-zinc-300 font-bold truncate block" title="0xF2E246BB76DF876Cef8b38ae84130F4F55De395b">0xF2E246BB76DF876Cef8b38ae84130F4F55De395b</span>
+            </div>
+            <div className="p-2 bg-slate-900 rounded border border-slate-800">
+              <span className="text-slate-400 block text-[10px]">BLOCKCHAIN_PRIVATE_KEY</span>
+              <span className="text-zinc-300 font-bold block">•••••••••••• (Loaded)</span>
+            </div>
           </div>
         </div>
       </div>

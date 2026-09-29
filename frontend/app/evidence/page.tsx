@@ -240,6 +240,51 @@ export default function EvidencePage() {
         </div>
       </div>
 
+      {/* Visual .env Blockchain Configuration Card */}
+      <div className="p-4 bg-slate-900/90 border border-zinc-500/40 rounded-xl shadow-xl space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-zinc-400 animate-pulse" />
+            <h4 className="text-xs font-bold text-white font-mono uppercase tracking-wider">
+              Active .env Blockchain Node Configuration
+            </h4>
+          </div>
+          <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-zinc-950 text-zinc-300 border border-zinc-800">
+            ENV ACTIVE (.env)
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs font-mono pt-1">
+          <div className="p-2.5 bg-slate-950 rounded-lg border border-slate-800">
+            <span className="text-[10px] text-slate-400 block font-semibold">BLOCKCHAIN_RPC_URL</span>
+            <span className="text-zinc-300 font-bold text-[11px] truncate block">
+              {blockchainStatus?.rpc_url || 'https://rpc.mstblockchain.com'}
+            </span>
+          </div>
+
+          <div className="p-2.5 bg-slate-950 rounded-lg border border-slate-800">
+            <span className="text-[10px] text-slate-400 block font-semibold">BLOCKCHAIN_CHAIN_ID</span>
+            <span className="text-zinc-300 font-bold text-[11px] block">
+              {blockchainStatus?.chain_id || '1337'} <span className="text-slate-400 text-[10px]">(MST Network)</span>
+            </span>
+          </div>
+
+          <div className="p-2.5 bg-slate-950 rounded-lg border border-slate-800">
+            <span className="text-[10px] text-slate-400 block font-semibold">BLOCKCHAIN_CONTRACT_ADDRESS</span>
+            <span className="text-zinc-300 font-bold text-[11px] truncate block" title={blockchainStatus?.contract_address || '0xF2E246BB76DF876Cef8b38ae84130F4F55De395b'}>
+              {blockchainStatus?.contract_address || '0xF2E246BB76DF876Cef8b38ae84130F4F55De395b'}
+            </span>
+          </div>
+
+          <div className="p-2.5 bg-slate-950 rounded-lg border border-slate-800">
+            <span className="text-[10px] text-slate-400 block font-semibold">BLOCKCHAIN_PRIVATE_KEY</span>
+            <span className="text-zinc-300 font-bold text-[11px] block">
+              •••••••••••••••• <span className="text-zinc-400 text-[10px]">(Loaded & Signed)</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
       {/* Smart Contract Connection Banner */}
       <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-xl flex flex-wrap items-center justify-between gap-4 shadow-md">
         <div className="flex items-center gap-3">
@@ -254,7 +299,7 @@ export default function EvidencePage() {
               </span>
             </div>
             <p className="text-xs text-slate-400 font-mono mt-0.5">
-              Contract: <span className="text-zinc-300">{blockchainStatus?.contract_address || '0x5FbDB2315678afecb367f032d93F642f64180aa3'}</span> | Chain ID: {blockchainStatus?.chain_id || '31337'}
+              Contract: <span className="text-zinc-300">{blockchainStatus?.contract_address || '0xF2E246BB76DF876Cef8b38ae84130F4F55De395b'}</span> | Chain ID: {blockchainStatus?.chain_id || '1337'}
             </p>
           </div>
         </div>
