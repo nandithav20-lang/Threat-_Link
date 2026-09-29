@@ -67,6 +67,8 @@ export default function IncidentsPage() {
         setIsModalOpen(false);
         setTitleInput('');
         setDescInput('');
+        const newInc = res.data;
+        setIncidents((prev) => [newInc, ...prev.filter((i) => i.id !== newInc.id)]);
         await fetchIncidents();
       } else {
         setCreateError(res.message || 'Unable to create incident.');

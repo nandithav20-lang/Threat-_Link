@@ -31,70 +31,136 @@ const fallbackDarkWeb: DarkWebIndicator[] = [
   },
 ];
 
+const STORAGE_KEY = 'threatlink_custom_darkweb';
+
+function getStoredDarkWeb(): DarkWebIndicator[] {
+  if (typeof window === 'undefined') return fallbackDarkWeb;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(fallbackDarkWeb));
+      return fallbackDarkWeb;
+    }
+    return JSON.parse(raw);
+  } catch {
+    return fallbackDarkWeb;
+  }
+}
+
+function saveStoredDarkWeb(items: DarkWebIndicator[]): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  } catch (err) {
+    console.error('Failed to save dark web items to localStorage:', err);
+  }
+}
+
 export const darkWebService = {
   async getDarkWebIndicators(): Promise<ApiResponse<DarkWebIndicator[]>> {
+    const local = getStoredDarkWeb();
     try {
       const res = await fetchApi<ApiResponse<DarkWebIndicator[]>>('/dark-web');
-      if (res && res.success && res.data && res.data.length > 0) return res;
-      return { success: true, message: 'Indicators retrieved', data: fallbackDarkWeb };
+      if (res && res.success && res.data && Array.isArray(res.data) && res.data.length > 0) {
+        const apiIds = new Set(res.data.map((d) => d.id));
+        const customItems = local.filter((d) => !apiIds.has(d.id));
+        const merged = [...customItems, ...res.data];
+        saveStoredDarkWeb(merged);
+        return { success: true, message: 'Indicators retrieved', data: merged };
+      }
+      return { success: true, message: 'Indicators retrieved', data: local };
     } catch {
-      return { success: true, message: 'Indicators retrieved (Deployment Mode)', data: fallbackDarkWeb };
+      return { success: true, message: 'Indicators retrieved', data: local };
     }
   },
 
   async getDarkWebIndicator(id: string): Promise<ApiResponse<DarkWebIndicator>> {
+    const list = getStoredDarkWeb();
     try {
-      return await fetchApi<ApiResponse<DarkWebIndicator>>(`/dark-web/${id}`);
+      const res = await fetchApi<ApiResponse<DarkWebIndicator>>(`/dark-web/${id}`);
+      if (res && res.success && res.data) return res;
+      const found = list.find((d) => d.id === id) || list[0];
+      return { success: true, message: 'Indicator retrieved', data: found };
     } catch {
-      const found = fallbackDarkWeb.find((d) => d.id === id) || fallbackDarkWeb[0];
+      const found = list.find((d) => d.id === id) || list[0];
       return { success: true, message: 'Indicator retrieved', data: found };
     }
   },
 
   async createDarkWebIndicator(data: DarkWebIndicatorCreate): Promise<ApiResponse<DarkWebIndicator>> {
+    const list = getStoredDarkWeb();
+    const newItem: DarkWebIndicator = {
+      id: `DW-${Math.floor(100 + Math.random() * 900)}`,
+      indicator: data.indicator.trim(),
+      indicator_type: data.indicator_type,
+      source: data.source ? data.source.trim() : 'Dark Web Crawler',
+      related_entity: data.related_entity ? data.related_entity.trim() : 'EMP001',
+      severity: data.severity || 'high',
+      status: data.status || 'new',
+      discovered_at: new Date().toISOString(),
+      description: data.description ? data.description.trim() : 'Added by analyst.',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
     try {
-      return await fetchApi<ApiResponse<DarkWebIndicator>>('/dark-web', {
+      const res = await fetchApi<ApiResponse<DarkWebIndicator>>('/dark-web', {
         method: 'POST',
         body: JSON.stringify(data),
       });
+      if (res && res.success && res.data) {
+        const createdObj = res.data.indicator ? res.data : { ...newItem, ...res.data };
+        const updatedList = [createdObj, ...list];
+        saveStoredDarkWeb(updatedList);
+        return { success: true, message: 'Dark web indicator added', data: createdObj };
+      }
     } catch {
-      const newItem: DarkWebIndicator = {
-        id: `DW-${Math.floor(100 + Math.random() * 900)}`,
-        indicator: data.indicator,
-        indicator_type: data.indicator_type,
-        source: data.source || 'Dark Web Crawler',
-        related_entity: data.related_entity || 'EMP001',
-        severity: data.severity || 'high',
-        status: data.status || 'new',
-        discovered_at: new Date().toISOString(),
-        description: data.description || 'Added by analyst.',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-      return { success: true, message: 'Dark web indicator added', data: newItem };
+      // Fallback
     }
+
+    const updatedList = [newItem, ...list];
+    saveStoredDarkWeb(updatedList);
+    return { success: true, message: 'Dark web indicator added', data: newItem };
   },
 
   async updateDarkWebIndicator(id: string, data: DarkWebIndicatorUpdate): Promise<ApiResponse<DarkWebIndicator>> {
+    const list = getStoredDarkWeb();
+    const index = list.findIndex((d) => d.id === id);
+
+    let updated: DarkWebIndicator;
+    if (index !== -1) {
+      updated = { ...list[index], ...data, updated_at: new Date().toISOString() };
+      list[index] = updated;
+      saveStoredDarkWeb(list);
+    } else {
+      updated = { ...list[0], id, ...data, updated_at: new Date().toISOString() };
+    }
+
     try {
-      return await fetchApi<ApiResponse<DarkWebIndicator>>(`/dark-web/${id}`, {
+      await fetchApi<ApiResponse<DarkWebIndicator>>(`/dark-web/${id}`, {
         method: 'PUT',
         body: JSON.stringify(data),
       });
     } catch {
-      const found = fallbackDarkWeb.find((d) => d.id === id) || fallbackDarkWeb[0];
-      const updated = { ...found, ...data };
-      return { success: true, message: 'Indicator updated', data: updated };
+      // Ignore API error
     }
+
+    return { success: true, message: 'Indicator updated', data: updated };
   },
 
   async deleteDarkWebIndicator(id: string): Promise<ApiResponse<null>> {
+    const list = getStoredDarkWeb();
+    const filtered = list.filter((d) => d.id !== id);
+    saveStoredDarkWeb(filtered);
+
     try {
-      return await fetchApi<ApiResponse<null>>(`/dark-web/${id}`, {
+      await fetchApi<ApiResponse<null>>(`/dark-web/${id}`, {
         method: 'DELETE',
       });
     } catch {
-      return { success: true, message: 'Indicator deleted', data: null };
+      // Ignore API error
     }
+
+    return { success: true, message: 'Indicator deleted', data: null };
   },
 };

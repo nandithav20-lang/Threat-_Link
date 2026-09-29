@@ -103,9 +103,11 @@ export default function DarkWebPage() {
         }
       } else {
         const res = await darkWebService.createDarkWebIndicator(formData);
-        if (res && res.success) {
+        if (res && res.success && res.data) {
           setSuccessMessage('New Dark Web indicator created successfully.');
           setIsFormOpen(false);
+          const newDw = res.data;
+          setIndicators((prev) => [newDw, ...prev.filter((d) => d.id !== newDw.id)]);
           fetchIndicators();
         } else {
           setError(res?.message || 'Unable to create Dark Web indicator.');

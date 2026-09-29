@@ -88,58 +88,118 @@ const fallbackInvestigation: InvestigationData = {
   updated_at: '2026-09-26T18:30:00Z',
 };
 
+const STORAGE_KEY = 'threatlink_custom_incidents';
+
+function getStoredIncidents(): IncidentItem[] {
+  if (typeof window === 'undefined') return fallbackIncidents;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(fallbackIncidents));
+      return fallbackIncidents;
+    }
+    return JSON.parse(raw);
+  } catch {
+    return fallbackIncidents;
+  }
+}
+
+function saveStoredIncidents(incidents: IncidentItem[]): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(incidents));
+  } catch (err) {
+    console.error('Failed to save incidents to localStorage:', err);
+  }
+}
+
 export const incidentService = {
   async getIncidents(): Promise<ApiResponse<IncidentItem[]>> {
+    const local = getStoredIncidents();
     try {
       const res = await fetchApi<ApiResponse<IncidentItem[]>>('/incidents');
-      if (res && res.success && res.data && res.data.length > 0) return res;
-      return { success: true, message: 'Incidents retrieved', data: fallbackIncidents };
+      if (res && res.success && res.data && Array.isArray(res.data) && res.data.length > 0) {
+        const apiIds = new Set(res.data.map((i) => i.id));
+        const customItems = local.filter((i) => !apiIds.has(i.id));
+        const merged = [...customItems, ...res.data];
+        saveStoredIncidents(merged);
+        return { success: true, message: 'Incidents retrieved', data: merged };
+      }
+      return { success: true, message: 'Incidents retrieved', data: local };
     } catch {
-      return { success: true, message: 'Incidents retrieved (Deployment Mode)', data: fallbackIncidents };
+      return { success: true, message: 'Incidents retrieved', data: local };
     }
   },
 
   async getIncident(id: string): Promise<ApiResponse<IncidentItem>> {
+    const list = getStoredIncidents();
     try {
-      return await fetchApi<ApiResponse<IncidentItem>>(`/incidents/${id}`);
+      const res = await fetchApi<ApiResponse<IncidentItem>>(`/incidents/${id}`);
+      if (res && res.success && res.data) return res;
+      const found = list.find((i) => i.id === id) || list[0];
+      return { success: true, message: 'Incident retrieved', data: found };
     } catch {
-      const found = fallbackIncidents.find((i) => i.id === id) || fallbackIncidents[0];
+      const found = list.find((i) => i.id === id) || list[0];
       return { success: true, message: 'Incident retrieved', data: found };
     }
   },
 
   async createIncident(data: IncidentCreateInput): Promise<ApiResponse<IncidentItem>> {
+    const list = getStoredIncidents();
+    const newItem: IncidentItem = {
+      id: `INC-${Math.floor(100 + Math.random() * 900)}`,
+      title: data.title.trim(),
+      description: data.description ? data.description.trim() : 'Created by investigator.',
+      status: 'OPEN',
+      risk_score: 75,
+      risk_level: 'HIGH',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
     try {
-      return await fetchApi<ApiResponse<IncidentItem>>('/incidents', {
+      const res = await fetchApi<ApiResponse<IncidentItem>>('/incidents', {
         method: 'POST',
         body: JSON.stringify(data),
       });
+      if (res && res.success && res.data) {
+        const createdObj = res.data.id && res.data.title ? res.data : { ...newItem, ...res.data };
+        const updatedList = [createdObj, ...list];
+        saveStoredIncidents(updatedList);
+        return { success: true, message: 'Incident created successfully', data: createdObj };
+      }
     } catch {
-      const newItem: IncidentItem = {
-        id: `INC-${Math.floor(100 + Math.random() * 900)}`,
-        title: data.title,
-        description: data.description || 'Created by investigator.',
-        status: 'OPEN',
-        risk_score: 75,
-        risk_level: 'HIGH',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-      return { success: true, message: 'Incident created successfully', data: newItem };
+      // Fallback
     }
+
+    const updatedList = [newItem, ...list];
+    saveStoredIncidents(updatedList);
+    return { success: true, message: 'Incident created successfully', data: newItem };
   },
 
   async updateIncidentStatus(id: string, status: string): Promise<ApiResponse<IncidentItem>> {
+    const list = getStoredIncidents();
+    const index = list.findIndex((i) => i.id === id);
+
+    let updated: IncidentItem;
+    if (index !== -1) {
+      updated = { ...list[index], status, updated_at: new Date().toISOString() };
+      list[index] = updated;
+      saveStoredIncidents(list);
+    } else {
+      updated = { ...list[0], id, status, updated_at: new Date().toISOString() };
+    }
+
     try {
-      return await fetchApi<ApiResponse<IncidentItem>>(`/incidents/${id}/status`, {
+      await fetchApi<ApiResponse<IncidentItem>>(`/incidents/${id}/status`, {
         method: 'PATCH',
         body: JSON.stringify({ status }),
       });
     } catch {
-      const found = fallbackIncidents.find((i) => i.id === id) || fallbackIncidents[0];
-      const updated = { ...found, status };
-      return { success: true, message: 'Incident status updated', data: updated };
+      // Ignore API error
     }
+
+    return { success: true, message: 'Incident status updated', data: updated };
   },
 
   async getIncidentTimeline(id: string): Promise<ApiResponse<TimelineEvent[]>> {

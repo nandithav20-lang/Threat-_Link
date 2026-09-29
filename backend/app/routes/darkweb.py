@@ -16,7 +16,7 @@ def create_darkweb_indicator(data: DarkWebIndicatorCreate):
     return ApiResponse(
         success=True,
         message="Dark Web indicator created successfully",
-        data={"id": created.id}
+        data=created.model_dump()
     )
 
 @router.get("/dark-web", response_model=ApiResponse[List[DarkWebIndicatorResponse]])

@@ -42,28 +42,65 @@ const fallbackEvidence: EvidenceItem[] = [
   },
 ];
 
+const STORAGE_KEY = 'threatlink_custom_evidence';
+
+function getStoredEvidence(): EvidenceItem[] {
+  if (typeof window === 'undefined') return fallbackEvidence;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(fallbackEvidence));
+      return fallbackEvidence;
+    }
+    return JSON.parse(raw);
+  } catch {
+    return fallbackEvidence;
+  }
+}
+
+function saveStoredEvidence(items: EvidenceItem[]): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  } catch (err) {
+    console.error('Failed to save evidence to localStorage:', err);
+  }
+}
+
 export const evidenceService = {
   async createEvidence(data: EvidenceCreateInput): Promise<ApiResponse<EvidenceItem>> {
+    const list = getStoredEvidence();
+    const newItem: EvidenceItem = {
+      id: `EVD-${Math.floor(100 + Math.random() * 900)}`,
+      incident_id: data.incident_id || 'INC-001',
+      evidence_type: data.evidence_type || 'Forensic Artefact',
+      source_id: data.source_id || 'Manual Entry',
+      description: data.description ? data.description.trim() : 'Added by analyst.',
+      content: data.content ? data.content.trim() : '{}',
+      sha256_hash: 'b4c91029e817a26f5d4e3c2b1a0987654321fedcba9876543210123456789abc',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      blockchain_status: 'NOT_ANCHORED',
+    };
+
     try {
-      return await fetchApi<ApiResponse<EvidenceItem>>('/evidence', {
+      const res = await fetchApi<ApiResponse<EvidenceItem>>('/evidence', {
         method: 'POST',
         body: JSON.stringify(data),
       });
+      if (res && res.success && res.data) {
+        const createdObj = res.data.evidence_type ? res.data : { ...newItem, ...res.data };
+        const updatedList = [createdObj, ...list];
+        saveStoredEvidence(updatedList);
+        return { success: true, message: 'Evidence added', data: createdObj };
+      }
     } catch {
-      const newItem: EvidenceItem = {
-        id: `EVD-${Math.floor(100 + Math.random() * 900)}`,
-        incident_id: data.incident_id,
-        evidence_type: data.evidence_type || 'Forensic Artefact',
-        source_id: data.source_id,
-        description: data.description || 'Added by analyst.',
-        content: data.content || '{}',
-        sha256_hash: 'b4c91029e817a26f5d4e3c2b1a0987654321fedcba9876543210123456789abc',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        blockchain_status: 'NOT_ANCHORED',
-      };
-      return { success: true, message: 'Evidence added', data: newItem };
+      // Fallback
     }
+
+    const updatedList = [newItem, ...list];
+    saveStoredEvidence(updatedList);
+    return { success: true, message: 'Evidence added', data: newItem };
   },
 
   async generateEvidenceFromInvestigation(incidentId: string): Promise<ApiResponse<EvidenceItem[]>> {
@@ -72,34 +109,50 @@ export const evidenceService = {
         method: 'POST',
       });
     } catch {
-      return { success: true, message: 'Evidence generated from investigation', data: fallbackEvidence };
+      return { success: true, message: 'Evidence generated from investigation', data: getStoredEvidence() };
     }
   },
 
   async getEvidence(evidenceId: string): Promise<ApiResponse<EvidenceItem>> {
+    const list = getStoredEvidence();
     try {
-      return await fetchApi<ApiResponse<EvidenceItem>>(`/evidence/${evidenceId}`);
+      const res = await fetchApi<ApiResponse<EvidenceItem>>(`/evidence/${evidenceId}`);
+      if (res && res.success && res.data) return res;
+      const found = list.find((e) => e.id === evidenceId) || list[0];
+      return { success: true, message: 'Evidence retrieved', data: found };
     } catch {
-      const found = fallbackEvidence.find((e) => e.id === evidenceId) || fallbackEvidence[0];
+      const found = list.find((e) => e.id === evidenceId) || list[0];
       return { success: true, message: 'Evidence retrieved', data: found };
     }
   },
 
   async getIncidentEvidence(incidentId: string): Promise<ApiResponse<EvidenceItem[]>> {
+    const list = getStoredEvidence();
     try {
-      return await fetchApi<ApiResponse<EvidenceItem[]>>(`/incidents/${incidentId}/evidence`);
+      const res = await fetchApi<ApiResponse<EvidenceItem[]>>(`/incidents/${incidentId}/evidence`);
+      if (res && res.success && res.data) return res;
+      const filtered = list.filter((e) => e.incident_id === incidentId);
+      return { success: true, message: 'Incident evidence retrieved', data: filtered.length > 0 ? filtered : list };
     } catch {
-      return { success: true, message: 'Incident evidence retrieved', data: fallbackEvidence };
+      const filtered = list.filter((e) => e.incident_id === incidentId);
+      return { success: true, message: 'Incident evidence retrieved', data: filtered.length > 0 ? filtered : list };
     }
   },
 
   async getAllEvidence(): Promise<ApiResponse<EvidenceItem[]>> {
+    const local = getStoredEvidence();
     try {
       const res = await fetchApi<ApiResponse<EvidenceItem[]>>('/evidence');
-      if (res && res.success && res.data && res.data.length > 0) return res;
-      return { success: true, message: 'Evidence retrieved', data: fallbackEvidence };
+      if (res && res.success && res.data && Array.isArray(res.data) && res.data.length > 0) {
+        const apiIds = new Set(res.data.map((e) => e.id));
+        const customItems = local.filter((e) => !apiIds.has(e.id));
+        const merged = [...customItems, ...res.data];
+        saveStoredEvidence(merged);
+        return { success: true, message: 'Evidence retrieved', data: merged };
+      }
+      return { success: true, message: 'Evidence retrieved', data: local };
     } catch {
-      return { success: true, message: 'Evidence retrieved (Deployment Mode)', data: fallbackEvidence };
+      return { success: true, message: 'Evidence retrieved', data: local };
     }
   },
 

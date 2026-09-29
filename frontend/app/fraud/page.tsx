@@ -113,9 +113,11 @@ export default function FraudPage() {
         }
       } else {
         const res = await fraudEventService.createFraudEvent(formData);
-        if (res && res.success) {
+        if (res && res.success && res.data) {
           setSuccessMessage('New fraud event created successfully.');
           setIsFormOpen(false);
+          const newFrd = res.data;
+          setEvents((prev) => [newFrd, ...prev.filter((f) => f.id !== newFrd.id)]);
           fetchFraudEvents();
         } else {
           setError(res?.message || 'Unable to create fraud event.');

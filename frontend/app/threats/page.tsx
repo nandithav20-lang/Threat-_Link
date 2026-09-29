@@ -103,9 +103,11 @@ export default function ThreatsPage() {
       } else {
         // Create new threat
         const res = await threatService.createThreat(formData);
-        if (res && res.success) {
+        if (res && res.success && res.data) {
           setSuccessMessage('New threat created successfully.');
           setIsFormOpen(false);
+          const newThreatObj = res.data;
+          setThreats((prev) => [newThreatObj, ...prev.filter((t) => t.id !== newThreatObj.id)]);
           fetchThreats();
         } else {
           setError(res?.message || 'Unable to create threat.');

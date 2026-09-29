@@ -16,7 +16,7 @@ def create_fraud_event(data: FraudEventCreate):
     return ApiResponse(
         success=True,
         message="Fraud event created successfully",
-        data={"id": created.id}
+        data=created.model_dump()
     )
 
 @router.get("/fraud-events", response_model=ApiResponse[List[FraudEventResponse]])

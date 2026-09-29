@@ -76,14 +76,19 @@ function saveStoredThreats(threats: Threat[]): void {
 
 export const threatService = {
   async getThreats(): Promise<ApiResponse<Threat[]>> {
+    const local = getStoredThreats();
     try {
       const res = await fetchApi<ApiResponse<Threat[]>>('/threats');
       if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
-        return res;
+        const apiIds = new Set(res.data.map((t) => t.id));
+        const customItems = local.filter((t) => !apiIds.has(t.id));
+        const merged = [...customItems, ...res.data];
+        saveStoredThreats(merged);
+        return { success: true, message: 'Threats retrieved', data: merged };
       }
-      return { success: true, message: 'Threats retrieved', data: getStoredThreats() };
+      return { success: true, message: 'Threats retrieved', data: local };
     } catch {
-      return { success: true, message: 'Threats retrieved', data: getStoredThreats() };
+      return { success: true, message: 'Threats retrieved', data: local };
     }
   },
 

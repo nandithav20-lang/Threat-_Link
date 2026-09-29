@@ -27,12 +27,33 @@ import {
   Boxes,
   ExternalLink,
   Lock,
+  Plus,
+  X,
+  Loader2,
 } from 'lucide-react';
 
 export default function EvidencePage() {
   const [evidenceList, setEvidenceList] = useState<EvidenceItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [submitting, setSubmitting] = useState<boolean>(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [formSuccess, setFormSuccess] = useState<string | null>(null);
+  const [formData, setFormData] = useState<{
+    incident_id: string;
+    evidence_type: string;
+    description: string;
+    content: string;
+    source_id: string;
+  }>({
+    incident_id: 'INC-001',
+    evidence_type: 'DARK_WEB',
+    description: '',
+    content: '',
+    source_id: 'Analyst Submission',
+  });
 
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
   const [anchoringId, setAnchoringId] = useState<string | null>(null);
@@ -126,6 +147,37 @@ export default function EvidencePage() {
     }
   };
 
+  const handleCreateEvidence = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setFormError(null);
+    setFormSuccess(null);
+
+    try {
+      const res = await evidenceService.createEvidence(formData);
+      if (res.success && res.data) {
+        setFormSuccess('Evidence item added successfully.');
+        setIsModalOpen(false);
+        const newEvd = res.data;
+        setEvidenceList((prev) => [newEvd, ...prev.filter((e) => e.id !== newEvd.id)]);
+        setFormData({
+          incident_id: 'INC-001',
+          evidence_type: 'DARK_WEB',
+          description: '',
+          content: '',
+          source_id: 'Analyst Submission',
+        });
+        await fetchAllData();
+      } else {
+        setFormError(res.message || 'Unable to create evidence item.');
+      }
+    } catch (err: any) {
+      setFormError(err?.message || 'Unable to create evidence item.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleCopyText = (id: string, text: string) => {
     navigator.clipboard.writeText(text);
     setCopiedId(id);
@@ -186,13 +238,22 @@ export default function EvidencePage() {
           </div>
         </div>
 
-        <button
-          onClick={fetchAllData}
-          className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded border border-slate-700 flex items-center gap-1.5 transition-colors"
-        >
-          <RefreshCw className="w-3.5 h-3.5" />
-          <span>Refresh</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="px-3.5 py-1.5 bg-zinc-600 hover:bg-zinc-500 text-white text-xs font-semibold rounded-lg shadow flex items-center gap-1.5 transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Add Evidence</span>
+          </button>
+          <button
+            onClick={fetchAllData}
+            className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded-lg border border-slate-700 flex items-center gap-1.5 transition-colors"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>Refresh</span>
+          </button>
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -398,6 +459,119 @@ export default function EvidencePage() {
                 })}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+      {/* Add Evidence Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-xl w-full max-w-lg shadow-2xl p-6 space-y-4 text-xs">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <Plus className="w-4 h-4 text-zinc-400" />
+                <span>Add Forensic Evidence Record</span>
+              </h3>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="text-slate-400 hover:text-white transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {formError && (
+              <div className="p-3 bg-rose-950/60 border border-rose-800 text-rose-300 rounded text-xs flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 shrink-0 text-rose-400" />
+                <span>{formError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleCreateEvidence} className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Incident Case ID</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. INC-001"
+                    value={formData.incident_id}
+                    onChange={(e) => setFormData({ ...formData, incident_id: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white font-mono focus:outline-none focus:border-zinc-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Evidence Type</label>
+                  <select
+                    value={formData.evidence_type}
+                    onChange={(e) => setFormData({ ...formData, evidence_type: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-zinc-500"
+                  >
+                    <option value="DARK_WEB">DARK_WEB</option>
+                    <option value="FRAUD">FRAUD</option>
+                    <option value="CORRELATION">CORRELATION</option>
+                    <option value="AI_FINDING">AI_FINDING</option>
+                    <option value="RISK">RISK</option>
+                    <option value="INVESTIGATION">INVESTIGATION</option>
+                    <option value="FORENSIC_DUMP">FORENSIC_DUMP</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">Source / Detector</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. BreachForums Monitor, SWIFT Gateway Log"
+                  value={formData.source_id}
+                  onChange={(e) => setFormData({ ...formData, source_id: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-zinc-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">Evidence Description</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Brief description of the evidence artefact..."
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-zinc-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">Raw Payload / Content JSON</label>
+                <textarea
+                  rows={3}
+                  required
+                  placeholder='{"user": "investigator@fincorp-global.com", "hash": "..."}'
+                  value={formData.content}
+                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white font-mono focus:outline-none focus:border-zinc-500"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-4 py-2 rounded-lg text-slate-400 hover:text-white transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-600 hover:bg-zinc-500 text-white font-semibold shadow-md transition-colors disabled:opacity-50"
+                >
+                  {submitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  {submitting ? 'Creating...' : 'Create Evidence Record'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
